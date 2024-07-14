@@ -6,28 +6,38 @@ server_host = sys.argv[1]
 server_port = sys.argv[2]
 filename = sys.argv[3]
 
-# Create a Client class that can:
-#   1) init a connection with server,
-#   2) send a request to server
-#   3) receive a reply
-#   4) return the reply 
+
+class ClientSocket:
+
+    def __init__(self, server_host, server_port):
+        self.client_socket = socket(AF_INET, SOCK_STREAM)
+        self.client_socket.connect((server_host, server_port))
+        self.server_host = server_host
+        self.server_port = server_port  
+
+    def send_get_request(self, filename):
+        http_request = "GET /{filename} HTTP/1.1\r\nConnection: close\r\nHost: {server_host}\r\n\r\n ".format(filename=filename, server_host=self.server_host)
+        self.client_socket.send(http_request.encode())
+
+    def get_response(self):
+        final_response = ""
+        while True:
+            cur_response = self.client_socket.recv(2048).decode()
+            if not cur_response: break                      # if no response? ; taken from https://docs.python.org/3/library/socket.html#example 
+            final_response = final_response + cur_response
+        self.client_socket.close()
+        return final_response
 
 
-Bob_client_socket = socket(AF_INET, SOCK_STREAM)
-Steve_client_socket = socket(AF_INET, SOCK_STREAM)
+number_of_clients = 2
+my_sockets = []
 
-Bob_client_socket.connect((server_host, int(server_port)))
-Steve_client_socket.connect((server_host, int(server_port)))
-http_request = "GET /{filename} HTTP/1.1\r\nConnection: close\r\nHost: {server_host}\r\n\r\n ".format(filename=filename, server_host=server_host)
+for i in range(number_of_clients):
+    my_sockets.append(ClientSocket(server_host, int(server_port)))
 
-Bob_client_socket.send(http_request.encode())
-Steve_client_socket.send(http_request.encode())
+for i in range(number_of_clients):
+    my_sockets[i].send_get_request(filename)
 
-Bob_reply = Bob_client_socket.recv(2048).decode()
-Steve_reply = Steve_client_socket.recv(2048).decode()
-
-print('Bob! from server:\n' + Bob_reply + "\n")
-print('Steve! from server:\n' + Steve_reply + "\n")
-
-Bob_client_socket.close()
-Steve_client_socket.close()
+for i in range(number_of_clients):
+    response = my_sockets[i].get_response()
+    print(str(i) + " client, the response - " + response)

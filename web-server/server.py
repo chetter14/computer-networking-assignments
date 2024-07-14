@@ -54,6 +54,7 @@ def connection_handling_function(connection_socket):
         # Send the content of the requested file
         for i in range(0, len(output_data)):
             connection_socket.send(output_data[i].encode())
+        connection_socket.send("\r\n".encode())
         connection_socket.close()
 
         print(str(cur_thread_client_number) + " Sent the HTML file!\n")
@@ -70,6 +71,9 @@ def connection_handling_function(connection_socket):
         entity = "404 Not Found"
         connection_socket.send(entity.encode())
         connection_socket.close()
+
+        if mutex.locked():
+            mutex.release()         # because IO error occured after mutex was acquired, we should release it for further correct work
         
         print(str(cur_thread_client_number) + " Closed the connection!\n")
 
@@ -82,5 +86,4 @@ while True:
     connection_socket, client_address = server_socket.accept()
     client_thread = Thread(target=connection_handling_function, args=[connection_socket])
     client_thread.start()
-    # client_thread.join()
 
