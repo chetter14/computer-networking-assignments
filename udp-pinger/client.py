@@ -15,11 +15,10 @@ for i in range(10):
     client_socket.sendto(message.encode(), (server_host, int(server_port)))
     try:
         reply, server_address = client_socket.recvfrom(2048)
+        print("From server - {reply}".format(reply=reply.decode()))
         receive_time = datetime.now()
-        print("From server - " + reply.decode())
-        
         delta_time = receive_time - send_time
-        print("RTT - " + str(delta_time.total_seconds()))
+        print("RTT (h:m:s.mcs) - {rtt}".format(rtt=delta_time))
     except timeout:
         print("Request timed out")
 
