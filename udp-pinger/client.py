@@ -8,10 +8,9 @@ server_port = sys.argv[2]
 client_socket = socket(AF_INET, SOCK_DGRAM)
 client_socket.settimeout(1)     # 1 sec
 
-message = "ping"
-
-for i in range(10):
+for i in range(1, 11):
     send_time = datetime.now()
+    message = "ping {number} {time}".format(number=i, time=send_time)
     client_socket.sendto(message.encode(), (server_host, int(server_port)))
     try:
         reply, server_address = client_socket.recvfrom(2048)
