@@ -12,7 +12,7 @@ while True:
     try:
         message, address = serverSocket.recvfrom(1024) 
         receive_time = datetime.now()
-        print("From client - {message}".format(message=message.decode()))
+        print("From client:\n\t{message}".format(message=message.decode()))
 
         # parse the client time 
         client_message = message.split(' ')
@@ -21,8 +21,7 @@ while True:
 
         # calculate the difference
         delta_time = receive_time - client_time
-        print("Delta time - {delta}".format(delta=delta_time))
+        print("Delta time - {delta}\n".format(delta=delta_time))
 
     except timeout:
         print("The client application was closed.\n")
-        break
