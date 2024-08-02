@@ -1,20 +1,18 @@
-HTTP/1.0 404 Not Found
+HTTP/1.0 301 Moved Permanently
+Location: http://www.google.com/
 Content-Type: text/html; charset=UTF-8
-Content-Security-Policy: object-src 'none';base-uri 'self';script-src 'nonce-ikOYw3mQnEOrSKxduAQA3A' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other
-Date: Sun, 28 Jul 2024 10:13:33 GMT
+Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-jj2kdVd9AeDjcT_mFJu-tA' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
+Date: Fri, 02 Aug 2024 05:52:57 GMT
+Expires: Sun, 01 Sep 2024 05:52:57 GMT
+Cache-Control: public, max-age=2592000
 Server: gws
-Content-Length: 1561
+Content-Length: 219
 X-XSS-Protection: 0
 X-Frame-Options: SAMEORIGIN
 
-<!DOCTYPE html>
-<html lang=en>
-  <meta charset=utf-8>
-  <meta name=viewport content="initial-scale=1, minimum-scale=1, width=device-width">
-  <title>Error 404 (Not Found)!!1</title>
-  <style>
-    *{margin:0;padding:0}html,code{font:15px/22px arial,sans-serif}html{background:#fff;color:#222;padding:15px}body{margin:7% auto 0;max-width:390px;min-height:180px;padding:30px 0 15px}* > body{background:url(//www.google.com/images/errors/robot.png) 100% 5px no-repeat;padding-right:205px}p{margin:11px 0 22px;overflow:hidden}ins{color:#777;text-decoration:none}a img{border:0}@media screen and (max-width:772px){body{background:none;margin-top:0;max-width:none;padding-right:0}}#logo{background:url(//www.google.com/images/branding/googlelogo/1x/googlelogo_color_150x54dp.png) no-repeat;margin-left:-5px}@media only screen and (min-resolution:192dpi){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat 0% 0%/100% 100%;-moz-border-image:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) 0}}@media only screen and (-webkit-min-device-pixel-ratio:2){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat;-webkit-background-size:100% 100%}}#logo{display:inline-block;height:54px;width:150px}
-  </style>
-  <a href=//www.google.com/><span id=logo aria-label=Google></span></a>
-  <p><b>404.</b> <ins>That’s an error.</ins>
-  <p>The requested URL <code>/</code> was not found on this server.  <ins>That’s all we know.</ins>
+<HTML><HEAD><meta http-equiv="content-type" content="text/html;charset=utf-8">
+<TITLE>301 Moved</TITLE></HEAD><BODY>
+<H1>301 Moved</H1>
+The document has moved
+<A HREF="http://www.google.com/">here</A>.
+</BODY></HTML>
