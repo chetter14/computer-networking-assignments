@@ -71,3 +71,5 @@ recv = clientSocket.recv(1024).decode()
 print(recv) 
 if recv[:3] != '221': 
     print('QUIT: 221 reply not received from server.') 
+
+clientSocket.close()
