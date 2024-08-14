@@ -23,7 +23,7 @@ while 1:
     full_path = message.split()[1][1:]           # with no '/' before the name of the file
     print("Full path - {full_path}".format(full_path=full_path))
 
-     # Check whether such a file exists in the cache
+    # Check whether such a file exists in the cache
     if full_path in pages_cache:                            # if yes, then cache hit and send to the client
         tcpCliSock.send(pages_cache[full_path].encode())
         print('Read from cache\n')
@@ -42,14 +42,14 @@ while 1:
             print("Successfully connected to host")
 
             # Redirect the request to the server
-            http_request = "GET /{file} HTTP/1.0\r\nHost: {host}\r\n\r\n ".format(file=file, host=hostn)
+            http_request = "GET /{file} HTTP/1.1\r\nHost: {host}\r\n\r\n \r\n".format(file=file, host=hostn)
             proxy_client_socket.send(http_request.encode())
             print("Sent the request - " + http_request)
 
             # Read the response into buffer
             final_response = ""
             while True:
-                cur_response = proxy_client_socket.recv(2048).decode()
+                cur_response = proxy_client_socket.recv(10240).decode()
                 if not cur_response: break
                 final_response = final_response + cur_response
 
@@ -66,6 +66,6 @@ while 1:
             print("Error! Something went wrong during the interaction with the server!\n\n")     
                           
     # Close the client
-    tcpCliSock.close()  
+    tcpCliSock.close()
     
 tcpSerSock.close()

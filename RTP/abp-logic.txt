@@ -1,0 +1,44 @@
+Only one data packet
+
+1) no corruption, no loss, no timeout:
+
+	A: 	send(pck0) + start_timer
+	B: 	recv(pck0) + extract(pck0) + send(ack0) -> waiting for pck1
+	A: 	recv(ack0) + reset_timer
+			
+2) no corruption, lost packet, timeout:
+
+	A:	send(pck0) + start_timer
+	B: 	...							-> waiting for pck0
+	A: 	timeout clicks + send(pck0) + reset_timer
+	
+3) no corruption, lost ack, timeout:
+	
+	A: 	send(pck0) + start_timer
+	B: 	recv(pck0) + extract(pck0) + send(ack0)	-> waiting for pck1
+	A: 	...
+	A:	timeout clicks + send(pck0) + reset_timer
+	B:	recv(pck0) + (detects the duplicate, no extract) + send(ack0) -> waiting for pck1
+	A:	recv(ack0) + reset_timer
+					
+4) no corruption, no loss, premature timeout:
+	
+	A: 	send(pck0) + start_timer
+	A:	timeout clicks + send(pck0) + reset_timer
+	B:	recv(pck0) + extract(pck0) + send(ack0)			  -> waiting for pck1
+	B: 	recv(pck0) + (detects the duplicate, no extract) + send(ack0) -> waiting for pck1
+	A: 	recv(ack0) + reset_timer + send(pck1) + start_timer
+	A: 	recv(ack0) + (do nothing, already waiting for ack1)
+	
+5) corrupted packet, no loss, no timeout:
+	
+	A: 	send(pck0) + start_timer
+	B: 	recv(pck0) + (detects the corruption, no extract) + send(nack0) -> waiting for pck0
+	A:	recv(nack0) + reset_timer + send(pck0)
+	
+6) corrupted ack, no loss, no timeout:
+	
+	A:	send(pck0) + start_timer
+	B: 	recv(pck0) + extract(pck0) + send(ack0) -> waiting for pck1
+	A: 	recv(ack0) + (detects the corruption) + reset_timer + send(pck0)
+	B:	recv(pck0) + (detects the duplicate, no extract) + send(ack0) -> waiting for pck1
