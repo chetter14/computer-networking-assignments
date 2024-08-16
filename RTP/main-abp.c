@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 /* ******************************************************************
  ALTERNATING BIT AND GO-BACK-N NETWORK EMULATOR: VERSION 1.1  J.F.Kurose
@@ -36,27 +37,69 @@ struct pkt {
 
 /********* STUDENTS WRITE THE NEXT SEVEN ROUTINES *********/
 
+void calculateChecksum(struct pkt* packet)
+{
+	int seqNum = packet->seqnum;
+	int ackNum = packet->acknum;
+	char* payload = packet->payload;
+	
+	int sum = seqNum + ackNum;
+	for (int i = 0; i < 20; ++i)
+	{
+		sum += (int)payload[i];
+	}
+	sum = ~sum;
+	
+	packet->checksum = sum;
+}
 
+typedef struct sender
+{
+	int curSeqNum;
+	int waitingAckNum;
+} sender;
 
+typedef struct receiver
+{
+	int curAckNum;
+	int waitingSeqNum;
+} receiver;
+
+sender A_sender;
+receiver B_receiver;
+
+const float timeout = 20;
 
 /* called from layer 5, passed the data to be sent to other side */
 A_output(message)
   struct msg message;
 {
+	struct pkt packet;
+	packet.seqnum = A_sender.curSeqNum; 	// current sequence number
+	packet.acknum = -1;						// ack number isn't used in sender
+	packet.checksum = 0;					// no checksum yet
+	for (int i = 0; i < 20; ++i)
+		packet.payload[i] = message.data[i];
 
+	// calculateChecksum(packet);
+	
+	starttimer(0, timeout);
+	tolayer3(0, packet);
 }
 
 B_output(message)  /* need be completed only for extra credit */
   struct msg message;
 {
-
+	
 }
 
 /* called from layer 3, when a packet arrives for layer 4 */
 A_input(packet)
   struct pkt packet;
 {
-
+	// get successful ACK from B
+	stoptimer(0);
+	A_sender.curSeqNum = (A_sender.curSeqNum + 1) % 2;
 }
 
 /* called when A's timer goes off */
@@ -69,15 +112,29 @@ A_timerinterrupt()
 /* entity A routines are called. You can use it to do any initialization */
 A_init()
 {
+	A_sender.curSeqNum = 0;
+	A_sender.waitingAckNum = 0;
 }
-
-
-/* Note that with simplex transfer from a-to-B, there is no B_output() */
 
 /* called from layer 3, when a packet arrives for layer 4 at B*/
 B_input(packet)
   struct pkt packet;
 {
+	struct msg message;
+	for (int i = 0; i < 20; ++i)
+		message.data[i] = packet.payload[i];
+	
+	tolayer5(1, message);
+	
+	struct pkt reply = {
+		-1,					// seq number isn't used in receiver
+		packet.seqnum,
+		0,
+		"empty"
+	};
+	
+	tolayer3(1, reply);
+	B_receiver.waitingSeqNum = (B_receiver.waitingSeqNum + 1) % 2;
 }
 
 /* called when B's timer goes off */
@@ -89,6 +146,8 @@ B_timerinterrupt()
 /* entity B routines are called. You can use it to do any initialization */
 B_init()
 {
+	B_receiver.curAckNum = 0;
+	B_receiver.waitingSeqNum = 0;
 }
 
 
@@ -251,7 +310,7 @@ init()                         /* initialize the simulator */
     printf("It is likely that random number generation on your machine\n" ); 
     printf("is different from what this emulator expects.  Please take\n");
     printf("a look at the routine jimsrand() in the emulator code. Sorry. \n");
-    exit();
+    exit(0);
     }
 
    ntolayer3 = 0;
@@ -283,7 +342,6 @@ generate_next_arrival()
 {
    double x,log(),ceil();
    struct event *evptr;
-    char *malloc();
    float ttime;
    int tempint;
 
@@ -394,7 +452,6 @@ float increment;
 
  struct event *q;
  struct event *evptr;
- char *malloc();
 
  if (TRACE>2)
     printf("          START TIMER: starting timer at %f\n",time);
@@ -422,7 +479,6 @@ struct pkt packet;
 {
  struct pkt *mypktptr;
  struct event *evptr,*q;
- char *malloc();
  float lastime, x, jimsrand();
  int i;
 
