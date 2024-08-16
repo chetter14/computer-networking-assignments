@@ -57,6 +57,7 @@ typedef struct sender
 {
 	int curSeqNum;
 	int waitingAckNum;
+	struct pkt packetToRetransmit;
 } sender;
 
 typedef struct receiver
@@ -78,13 +79,18 @@ A_output(message)
 	packet.seqnum = A_sender.curSeqNum; 	// current sequence number
 	packet.acknum = -1;						// ack number isn't used in sender
 	packet.checksum = 0;					// no checksum yet
-	for (int i = 0; i < 20; ++i)
-		packet.payload[i] = message.data[i];
-
+	strcpy(packet.payload, message.data);
+		
 	// calculateChecksum(packet);
 	
-	starttimer(0, timeout);
+	// make a copy of packet for possible future retransmissions
+	A_sender.packetToRetransmit = packet;	
+	strcopy(A_sender.packetToRetransmit.payload, packet.payload);
+
 	tolayer3(0, packet);
+	starttimer(0, timeout);
+	
+	// !!! add the check on whether there is any message in transit right now or not !!!
 }
 
 B_output(message)  /* need be completed only for extra credit */
@@ -105,7 +111,8 @@ A_input(packet)
 /* called when A's timer goes off */
 A_timerinterrupt()
 {
-
+	tolayer3(0, A_sender.packetToRetransmit);
+	starttimer(0, timeout);
 }  
 
 /* the following routine will be called once (only) before any other */
@@ -120,21 +127,30 @@ A_init()
 B_input(packet)
   struct pkt packet;
 {
-	struct msg message;
-	for (int i = 0; i < 20; ++i)
-		message.data[i] = packet.payload[i];
+	struct pkt reply;
 	
-	tolayer5(1, message);
-	
-	struct pkt reply = {
-		-1,					// seq number isn't used in receiver
-		packet.seqnum,
-		0,
-		"empty"
-	};
-	
-	tolayer3(1, reply);
-	B_receiver.waitingSeqNum = (B_receiver.waitingSeqNum + 1) % 2;
+	if (packet.seqnum == B_receiver.waitingSeqNum)
+	{
+		struct msg message;
+		strcpy(message.data, packet.payload);
+		
+		tolayer5(1, message);
+		
+		reply.seqnum = -1;					// seq number isn't used in receiver
+		reply.acknum = packet.seqnum;		// ack number of the packet received
+		reply.checksum = 0;					// no checksum yet
+		
+		tolayer3(1, reply);
+		B_receiver.waitingSeqNum = (B_receiver.waitingSeqNum + 1) % 2;
+	}
+	else	// not what the receiver expects
+	{
+		reply.seqnum = -1;
+		reply.acknum = (B_receiver.waitingSeqNum + 1) % 2;	// this ack number would be the last correctly received packet
+		reply.checksum = 0;
+		
+		tolayer3(1, reply);
+	}
 }
 
 /* called when B's timer goes off */
