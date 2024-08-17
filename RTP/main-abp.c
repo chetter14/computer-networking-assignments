@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
 
 /* ******************************************************************
  ALTERNATING BIT AND GO-BACK-N NETWORK EMULATOR: VERSION 1.1  J.F.Kurose
@@ -58,6 +60,7 @@ typedef struct sender
 	int curSeqNum;
 	int waitingAckNum;
 	struct pkt packetToRetransmit;
+	bool isAnyMessageInTransit;
 } sender;
 
 typedef struct receiver
@@ -75,6 +78,9 @@ const float timeout = 20;
 A_output(message)
   struct msg message;
 {
+	if (A_sender.isAnyMessageInTransit)
+		return;
+	
 	struct pkt packet;
 	packet.seqnum = A_sender.curSeqNum; 	// current sequence number
 	packet.acknum = -1;						// ack number isn't used in sender
@@ -84,13 +90,13 @@ A_output(message)
 	// calculateChecksum(packet);
 	
 	// make a copy of packet for possible future retransmissions
-	A_sender.packetToRetransmit = packet;	
-	strcopy(A_sender.packetToRetransmit.payload, packet.payload);
+	A_sender.packetToRetransmit = packet;
+	strcpy(A_sender.packetToRetransmit.payload, packet.payload);
 
 	tolayer3(0, packet);
 	starttimer(0, timeout);
 	
-	// !!! add the check on whether there is any message in transit right now or not !!!
+	A_sender.isAnyMessageInTransit = true;
 }
 
 B_output(message)  /* need be completed only for extra credit */
@@ -106,6 +112,7 @@ A_input(packet)
 	// get successful ACK from B
 	stoptimer(0);
 	A_sender.curSeqNum = (A_sender.curSeqNum + 1) % 2;
+	A_sender.isAnyMessageInTransit = false;
 }
 
 /* called when A's timer goes off */
@@ -121,6 +128,7 @@ A_init()
 {
 	A_sender.curSeqNum = 0;
 	A_sender.waitingAckNum = 0;
+	A_sender.isAnyMessageInTransit = false;
 }
 
 /* called from layer 3, when a packet arrives for layer 4 at B*/
@@ -128,6 +136,7 @@ B_input(packet)
   struct pkt packet;
 {
 	struct pkt reply;
+	strncpy(reply.payload, "empty", 20);
 	
 	if (packet.seqnum == B_receiver.waitingSeqNum)
 	{
