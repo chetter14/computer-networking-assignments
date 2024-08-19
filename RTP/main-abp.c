@@ -39,7 +39,7 @@ struct pkt {
 
 /********* STUDENTS WRITE THE NEXT SEVEN ROUTINES *********/
 
-void calculateChecksum(struct pkt* packet)
+int calculateChecksum(struct pkt* packet)
 {
 	int seqNum = packet->seqnum;
 	int ackNum = packet->acknum;
@@ -51,8 +51,25 @@ void calculateChecksum(struct pkt* packet)
 		sum += (int)payload[i];
 	}
 	sum = ~sum;
+	return sum;
+}
+
+bool isPacketValid(struct pkt* packet)
+{
+	int seqNum = packet->seqnum;
+	int ackNum = packet->acknum;
+	int checksum = packet->checksum;
 	
-	packet->checksum = sum;
+	int sum = seqNum + ackNum + checksum;
+	for (int i = 0; i < 20; ++i)
+	{
+		sum += (int)packet->payload[i];
+	}
+	
+	if (sum == -1)		// -1 in decimal = 11111111 11111111 11111111 11111111 in binary
+		return true;
+		
+	return false;
 }
 
 typedef struct sender
@@ -84,10 +101,8 @@ A_output(message)
 	struct pkt packet;
 	packet.seqnum = A_sender.curSeqNum; 	// current sequence number
 	packet.acknum = -1;						// ack number isn't used in sender
-	packet.checksum = 0;					// no checksum yet
 	strcpy(packet.payload, message.data);
-		
-	// calculateChecksum(packet);
+	packet.checksum = calculateChecksum(&packet);
 	
 	// make a copy of packet for possible future retransmissions
 	A_sender.packetToRetransmit = packet;
@@ -109,10 +124,32 @@ B_output(message)  /* need be completed only for extra credit */
 A_input(packet)
   struct pkt packet;
 {
-	// get successful ACK from B
-	stoptimer(0);
-	A_sender.curSeqNum = (A_sender.curSeqNum + 1) % 2;
-	A_sender.isAnyMessageInTransit = false;
+	if (!isPacketValid(&packet))					// received packet is corrupted
+	{
+		stoptimer(0);
+		tolayer3(0, A_sender.packetToRetransmit);
+		starttimer(0, timeout);
+	}
+	else											// packet is correct
+	{
+		if (packet.acknum == -1)					// packet that was sent from sender to receiver is NACKd
+		{
+			stoptimer(0);
+			tolayer3(0, A_sender.packetToRetransmit);
+			starttimer(0, timeout);
+		}
+		else
+		{
+			if (packet.acknum == A_sender.curSeqNum)	// received the expected ack
+			{
+				stoptimer(0);
+				A_sender.curSeqNum = (A_sender.curSeqNum + 1) % 2;
+				A_sender.isAnyMessageInTransit = false;
+			}
+			// else - not the expected ack num (i.e., because of premature timeout and doubled ack):
+			// do nothing
+		}
+	}
 }
 
 /* called when A's timer goes off */
@@ -138,28 +175,32 @@ B_input(packet)
 	struct pkt reply;
 	strncpy(reply.payload, "empty", 20);
 	
-	if (packet.seqnum == B_receiver.waitingSeqNum)
+	if (!isPacketValid(&packet))								// packet is corrupted
+	{
+		reply.seqnum = -1;
+		reply.acknum = -1;	// equivalent to NACK
+	} 
+	else 													// packet is correct
+	if (packet.seqnum == B_receiver.waitingSeqNum)			// packet that we expected
 	{
 		struct msg message;
 		strcpy(message.data, packet.payload);
 		
 		tolayer5(1, message);
 		
-		reply.seqnum = -1;					// seq number isn't used in receiver
-		reply.acknum = packet.seqnum;		// ack number of the packet received
-		reply.checksum = 0;					// no checksum yet
+		reply.seqnum = -1;								// seq number isn't used in receiver
+		reply.acknum = packet.seqnum;					// ack number of the packet received
 		
-		tolayer3(1, reply);
 		B_receiver.waitingSeqNum = (B_receiver.waitingSeqNum + 1) % 2;
 	}
-	else	// not what the receiver expects
+	else													// not what the receiver expects
 	{
 		reply.seqnum = -1;
 		reply.acknum = (B_receiver.waitingSeqNum + 1) % 2;	// this ack number would be the last correctly received packet
-		reply.checksum = 0;
-		
-		tolayer3(1, reply);
 	}
+	
+	reply.checksum = calculateChecksum(&reply);
+	tolayer3(1, reply);
 }
 
 /* called when B's timer goes off */
