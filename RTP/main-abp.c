@@ -45,12 +45,17 @@ int calculateChecksum(struct pkt* packet)
 	int ackNum = packet->acknum;
 	char* payload = packet->payload;
 	
+	// do the addition of all the values in a packet
 	int sum = seqNum + ackNum;
 	for (int i = 0; i < 20; ++i)
 	{
 		sum += (int)payload[i];
 	}
-	sum = ~sum;
+	
+	// invert the sum; (~sum) + sum = 11111111 11111111 11111111 11111111 (in binary)
+	// if on the receiver after doing the same additions we couldn't reproduce this "only 1s" value, 
+	// then the packet was corrupted during the transit
+	sum = ~sum;					
 	return sum;
 }
 
@@ -60,36 +65,38 @@ bool isPacketValid(struct pkt* packet)
 	int ackNum = packet->acknum;
 	int checksum = packet->checksum;
 	
+	// do the addition of all the variables
 	int sum = seqNum + ackNum + checksum;
 	for (int i = 0; i < 20; ++i)
 	{
 		sum += (int)packet->payload[i];
 	}
 	
-	if (sum == -1)		// -1 in decimal = 11111111 11111111 11111111 11111111 in binary
+	// if the packet is not corrupted, the sum would be 11111111 11111111 11111111 11111111 in binary (which is -1 in signed int)
+	if (sum == -1)
 		return true;
 		
 	return false;
 }
 
-typedef struct sender
+typedef struct sender				// define the sender-side required variables
 {
 	int curSeqNum;
-	int waitingAckNum;
+	int waitingAckNum;				// currently not used
 	struct pkt packetToRetransmit;
 	bool isAnyMessageInTransit;
 } sender;
 
-typedef struct receiver
+typedef struct receiver				// define the receiver-side required variables
 {
-	int curAckNum;
+	int curAckNum;					// currently not used
 	int waitingSeqNum;
 } receiver;
 
-sender A_sender;
-receiver B_receiver;
+sender A_sender;					// create A sender object
+receiver B_receiver;				// create B receiver object
 
-const float timeout = 20;
+const float timeout = 20;			// time value after which the timeout interrupt occurs
 
 /* called from layer 5, passed the data to be sent to other side */
 A_output(message)
@@ -157,7 +164,7 @@ A_timerinterrupt()
 {
 	tolayer3(0, A_sender.packetToRetransmit);
 	starttimer(0, timeout);
-}  
+}
 
 /* the following routine will be called once (only) before any other */
 /* entity A routines are called. You can use it to do any initialization */
@@ -173,15 +180,15 @@ B_input(packet)
   struct pkt packet;
 {
 	struct pkt reply;
-	strncpy(reply.payload, "empty", 20);
+	strncpy(reply.payload, "empty", 20);						// "empty" is just a stub
 	
 	if (!isPacketValid(&packet))								// packet is corrupted
 	{
-		reply.seqnum = -1;
+		reply.seqnum = -1;	// not used
 		reply.acknum = -1;	// equivalent to NACK
 	} 
 	else 													// packet is correct
-	if (packet.seqnum == B_receiver.waitingSeqNum)			// packet that we expected
+	if (packet.seqnum == B_receiver.waitingSeqNum)			// and that we expected
 	{
 		struct msg message;
 		strcpy(message.data, packet.payload);
@@ -206,6 +213,7 @@ B_input(packet)
 /* called when B's timer goes off */
 B_timerinterrupt()
 {
+	// empty
 }
 
 /* the following rouytine will be called once (only) before any other */
