@@ -1,0 +1,73 @@
+The algorithm (logic) behind each function:
+
+	buffer - max 50 packets, bufferSize
+	
+	base, nextseqnum, N 
+
+	1) A_init: 
+	
+		base = 0
+		nextseqnum = 0
+		initialize buffer
+	
+	2) A_output():
+	
+		if there is room for a packet in window:		-> nextseqnum < base + N
+			send(pkt)
+			if the first packet in the window:			-> base == nextseqnum
+				start timer
+			nextseqnum++
+		else if no room in window, but room in buffer:
+			storeInBuffer
+		else (no room anywhere):
+			exit
+		
+	3) A_input():
+	
+		if packet is valid:
+			move "base" variable right
+			
+			if no not ACK'd packets are left in window:		-> base == nextseqnum
+				if there are left packets in buffer:
+					take packets of the amount "base+N-nextseqnum" from buffer
+					put them into window
+					and send them
+					start_timer
+				else:		// no packets in buffer
+					stop_timer
+			else:											-> base < nextseqnum
+				if there are left packets in buffer:
+					take packets of the amount "base+N-nextseqnum" from buffer
+					put them into window
+					and send them
+				start_timer				// start timer with whatever buffer because there are already packets that were sent
+				
+		else:
+			// it's better wait for timer interrupt because 
+			// additional sending of packets from the window
+			// can make the connection congested
+		
+	4) A_timerinterrupt():
+		
+		resend all the packets in window (from base to nextseqnum - 1)
+		reset_timer
+		
+	5) B_init():
+
+		expected seq num = 0
+		define a packet that will be used each time (just change ACK appropriately)
+		
+	6) B_input():
+	
+		if the arrived packet is valid:
+			
+			if packet seq num != expected seq num:
+				send ACK (expected seq num - 1)			// send the last correctly received
+			else:
+				extract(pkt)		-> tolayer5
+				send ACK (expected seq num)
+				increment expected seq num
+		
+		else:		// packet is corrupted
+			send ACK (expected seq num - 1)				// the last correctly received
+		
