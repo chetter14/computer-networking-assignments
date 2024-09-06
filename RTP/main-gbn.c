@@ -101,14 +101,15 @@ A_output(message)
   struct msg message;
 {
 	struct pkt packet;
-	packet.seqnum = A_sender.nextSeqNum;
 	packet.acknum = -1;						// ack number isn't used in the sender
 	strcpy(packet.payload, message.data);
-	packet.checksum = calculateChecksum(&packet);
 	
 	if (A_sender.nextSeqNum < A_sender.base + N)	// there is room for a packet in window
-	{		
+	{
+		packet.seqnum = A_sender.nextSeqNum;
+		packet.checksum = calculateChecksum(&packet);
 		tolayer3(0, packet);
+		
 		if (A_sender.nextSeqNum == A_sender.base)
 			starttimer(0, timeout);
 		A_sender.nextSeqNum++;
@@ -127,6 +128,19 @@ B_output(message)  /* need be completed only for extra credit */
 	
 }
 
+void sendPacketsFromBuffer()
+{
+	while (A_sender.nextSeqNum < A_sender.base + N)			// until window is full
+	{														// take packets from buffer and send them
+		struct pkt tempPacket = getPktFromBuffer();
+		tempPacket.seqnum = A_sender.nextSeqNum;
+		tempPacket.checksum = calculateChecksum(&tempPacket);
+		tolayer3(0, tempPacket);
+		
+		A_sender.nextSeqNum++;
+	}
+}
+
 /* called from layer 3, when a packet arrives for layer 4 */
 A_input(packet)
   struct pkt packet;
@@ -138,59 +152,23 @@ A_input(packet)
 		{
 			if (!isBufferEmpty())						// there are packets in buffer
 			{
-				while (A_sender.nextSeqNum < A_sender.base + N)
-				{
-					struct pkt tempPacket = getPktFromBuffer();
-					tempPacket.
-				}
+				sendPacketsFromBuffer();
 				starttimer(0, timeout);
 			}
-			else										// no packet in buffer
+			else										// no packets in buffer
 				stoptimer(0);
 		}
 		else											// window is not totally full
 		{
 			if (!isBufferEmpty())						// there are packets in buffer
 			{
-				while (A_sender.nextSeqNum < A_sender.base + N)
-				{
-					struct pkt tempPacket = getPktFromBuffer();
-					tempPacket.
-				}
+				sendPacketsFromBuffer();
 			}
 			starttimer(0, timeout);
 		}
 	}
 	else
 		;// received packet is corrupted - do nothing
-	
-	
-	if (!isPacketValid(&packet))					// received packet is corrupted
-	{
-		stoptimer(0);
-		tolayer3(0, A_sender.packetToRetransmit);
-		starttimer(0, timeout);
-	}
-	else											// packet is correct
-	{
-		if (packet.acknum == -1)					// packet that was sent from sender to receiver is NACKd
-		{
-			stoptimer(0);
-			tolayer3(0, A_sender.packetToRetransmit);
-			starttimer(0, timeout);
-		}
-		else
-		{
-			if (packet.acknum == A_sender.curSeqNum)	// received the expected ack
-			{
-				stoptimer(0);
-				A_sender.curSeqNum = (A_sender.curSeqNum + 1) % 2;
-				A_sender.isAnyMessageInTransit = false;
-			}
-			// else - not the expected ack num (i.e., because of premature timeout and doubled ack):
-			// do nothing
-		}
-	}
 }
 
 /* called when A's timer goes off */
