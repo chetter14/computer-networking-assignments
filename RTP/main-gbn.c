@@ -131,6 +131,40 @@ B_output(message)  /* need be completed only for extra credit */
 A_input(packet)
   struct pkt packet;
 {
+	if (isPacketValid(&packet))
+	{
+		A_sender.base = packet.acknum + 1;
+		if (A_sender.base == A_sender.nextSeqNum)		// window is completely empty
+		{
+			if (!isBufferEmpty())						// there are packets in buffer
+			{
+				while (A_sender.nextSeqNum < A_sender.base + N)
+				{
+					struct pkt tempPacket = getPktFromBuffer();
+					tempPacket.
+				}
+				starttimer(0, timeout);
+			}
+			else										// no packet in buffer
+				stoptimer(0);
+		}
+		else											// window is not totally full
+		{
+			if (!isBufferEmpty())						// there are packets in buffer
+			{
+				while (A_sender.nextSeqNum < A_sender.base + N)
+				{
+					struct pkt tempPacket = getPktFromBuffer();
+					tempPacket.
+				}
+			}
+			starttimer(0, timeout);
+		}
+	}
+	else
+		;// received packet is corrupted - do nothing
+	
+	
 	if (!isPacketValid(&packet))					// received packet is corrupted
 	{
 		stoptimer(0);
