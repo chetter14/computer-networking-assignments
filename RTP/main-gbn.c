@@ -100,6 +100,10 @@ static const int N = 8;				// window size of the sender
 A_output(message)
   struct msg message;
 {
+	// Add packets array that stores all the packets that were sent, are sent and will be sent
+	// it's necessary for retransmission at timer interrupt
+	// (so, packets should be stored somehow)
+	
 	struct pkt packet;
 	packet.acknum = -1;						// ack number isn't used in the sender
 	strcpy(packet.payload, message.data);
@@ -174,7 +178,9 @@ A_input(packet)
 /* called when A's timer goes off */
 A_timerinterrupt()
 {
-	tolayer3(0, A_sender.packetToRetransmit);
+	for (int i = A_sender.base; i <= A_sender.nextSeqNum - 1; ++i)
+		tolayer3(0, A_sender.packets[i]);
+	
 	starttimer(0, timeout);
 }
 
@@ -182,9 +188,9 @@ A_timerinterrupt()
 /* entity A routines are called. You can use it to do any initialization */
 A_init()
 {
-	A_sender.curSeqNum = 0;
-	A_sender.waitingAckNum = 0;
-	A_sender.isAnyMessageInTransit = false;
+	A_sender.base = 0;
+	A_sender.nextSeqNum = 0;
+	initBuffer();
 }
 
 /* called from layer 3, when a packet arrives for layer 4 at B*/
