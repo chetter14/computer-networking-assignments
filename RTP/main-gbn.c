@@ -100,23 +100,25 @@ static const int N = 8;				// window size of the sender
 A_output(message)
   struct msg message;
 {
-	if (A_sender.isAnyMessageInTransit)
-		return;
-	
 	struct pkt packet;
-	packet.seqnum = A_sender.curSeqNum; 	// current sequence number
-	packet.acknum = -1;						// ack number isn't used in sender
+	packet.seqnum = A_sender.nextSeqNum;
+	packet.acknum = -1;						// ack number isn't used in the sender
 	strcpy(packet.payload, message.data);
 	packet.checksum = calculateChecksum(&packet);
 	
-	// make a copy of packet for possible future retransmissions
-	A_sender.packetToRetransmit = packet;
-	strcpy(A_sender.packetToRetransmit.payload, packet.payload);
-
-	tolayer3(0, packet);
-	starttimer(0, timeout);
-	
-	A_sender.isAnyMessageInTransit = true;
+	if (A_sender.nextSeqNum < A_sender.base + N)	// there is room for a packet in window
+	{		
+		tolayer3(0, packet);
+		if (A_sender.nextSeqNum == A_sender.base)
+			starttimer(0, timeout);
+		A_sender.nextSeqNum++;
+	}
+	else if (!isBufferFull())						// there is room for a packet in buffer
+	{
+		addToBuffer(packet);
+	}
+	else 											// no room anywhere
+		exit(0);									// ! INTENTIONAL EXIT(), REQUIRED BY THE TASK !
 }
 
 B_output(message)  /* need be completed only for extra credit */
