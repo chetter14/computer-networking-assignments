@@ -25,7 +25,7 @@ The algorithm (logic) behind each function:
 	3) A_input():
 	
 		if packet is valid:
-			move "base" variable right
+			base = getacknum(pkt) + 1
 			
 			if no not ACK'd packets are left in window:		-> base == nextseqnum
 				if there are left packets in buffer:
