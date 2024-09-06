@@ -93,8 +93,8 @@ typedef struct receiver				// define the receiver-side required variables
 sender A_sender;					// create A sender object
 receiver B_receiver;				// create B receiver object
 
-const int timeout = 20;			// time value after which the timeout interrupt occurs
-const int N = 8;				// window size of the sender
+static const int timeout = 20;			// time value after which the timeout interrupt occurs
+static const int N = 8;				// window size of the sender
 
 /* called from layer 5, passed the data to be sent to other side */
 A_output(message)
