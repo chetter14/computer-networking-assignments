@@ -44,11 +44,13 @@ void addPktToBuffer(struct pkt packet)
 	int newPacketIndex = (buffer.start + buffer.size) % 50;
 	buffer.packets[newPacketIndex] = packet;
 	buffer.size++;
+	printf("addPktToBuffer: %s\n", packet.payload);
 }
 
 struct pkt getPktFromBuffer()
 {
 	struct pkt packet = buffer.packets[buffer.start];
+	printf("getPktFromBuffer: %s\n", packet.payload);
 	buffer.start = (buffer.start + 1) % 50;
 	buffer.size--;
 	return packet;

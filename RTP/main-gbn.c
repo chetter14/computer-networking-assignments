@@ -125,8 +125,8 @@ B_output(message)  /* need be completed only for extra credit */
 
 void sendPacketsFromBuffer()
 {
-	while (A_sender.nextSeqNum < A_sender.base + N)			// until window is full
-	{														// take packets from buffer and send them
+	while (A_sender.nextSeqNum < A_sender.base + N && !isBufferEmpty())		// until window is full and there are left packets in buffer
+	{																			// take packets from buffer and send them
 		struct pkt tempPacket = getPktFromBuffer();
 		tempPacket.seqnum = A_sender.nextSeqNum;
 		tempPacket.checksum = calculateChecksum(&tempPacket);
@@ -149,6 +149,7 @@ A_input(packet)
 			if (!isBufferEmpty())						// there are packets in buffer
 			{
 				sendPacketsFromBuffer();
+				stoptimer(0);
 				starttimer(0, timeout);
 			}
 			else										// no packets in buffer
@@ -160,7 +161,10 @@ A_input(packet)
 			{
 				sendPacketsFromBuffer();
 			}
-			starttimer(0, timeout);
+			// No timer reset because packets that were sent first are going to be delayed for retransmission even further 
+			// so, I am trying to avoid it
+			// stoptimer(0);
+			// starttimer(0, timeout);
 		}
 	}
 	else
@@ -173,7 +177,6 @@ A_timerinterrupt()
 	for (int i = A_sender.base; i <= A_sender.nextSeqNum - 1; ++i)
 		tolayer3(0, A_sender.packets[i]);
 	
-	stoptimer(0);
 	starttimer(0, timeout);
 }
 
