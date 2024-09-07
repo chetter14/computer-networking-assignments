@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <limits.h>
 
 /* ******************************************************************
  ALTERNATING BIT AND GO-BACK-N NETWORK EMULATOR: VERSION 1.1  J.F.Kurose
@@ -83,6 +84,7 @@ typedef struct sender				// define the sender-side required variables
 {
 	int base;
 	int nextSeqNum;
+	struct pkt packets[1'000'000];	// store for retransmission; 1 million of available cells would be enough for such a home task
 } sender;
 
 typedef struct receiver				// define the receiver-side required variables
@@ -99,11 +101,7 @@ static const int N = 8;				// window size of the sender
 /* called from layer 5, passed the data to be sent to other side */
 A_output(message)
   struct msg message;
-{
-	// Add packets array that stores all the packets that were sent, are sent and will be sent
-	// it's necessary for retransmission at timer interrupt
-	// (so, packets should be stored somehow)
-	
+{	
 	struct pkt packet;
 	packet.acknum = -1;						// ack number isn't used in the sender
 	strcpy(packet.payload, message.data);
@@ -112,6 +110,7 @@ A_output(message)
 	{
 		packet.seqnum = A_sender.nextSeqNum;
 		packet.checksum = calculateChecksum(&packet);
+		A_sender.packets[nextSeqNum] = packet;		// store the packet for possible retransmission
 		tolayer3(0, packet);
 		
 		if (A_sender.nextSeqNum == A_sender.base)
@@ -139,6 +138,7 @@ void sendPacketsFromBuffer()
 		struct pkt tempPacket = getPktFromBuffer();
 		tempPacket.seqnum = A_sender.nextSeqNum;
 		tempPacket.checksum = calculateChecksum(&tempPacket);
+		A_sender.packets[nextSeqNum] = tempPacket;			// for possible retransmission
 		tolayer3(0, tempPacket);
 		
 		A_sender.nextSeqNum++;
