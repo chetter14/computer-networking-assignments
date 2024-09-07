@@ -1,3 +1,4 @@
+#include "buffer.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -27,16 +28,6 @@
 struct msg {
   char data[20];
   };
-
-/* a packet is the data unit passed from layer 4 (students code) to layer */
-/* 3 (teachers code).  Note the pre-defined packet structure, which all   */
-/* students must follow. */
-struct pkt {
-   int seqnum;
-   int acknum;
-   int checksum;
-   char payload[20];
-    };
 
 /********* STUDENTS WRITE THE NEXT SEVEN ROUTINES *********/
 
