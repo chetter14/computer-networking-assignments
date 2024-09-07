@@ -90,6 +90,7 @@ typedef struct sender				// define the sender-side required variables
 typedef struct receiver				// define the receiver-side required variables
 {
 	int expectedSeqNum;
+	struct pkt packet;
 } receiver;
 
 sender A_sender;					// create A sender object
@@ -197,35 +198,29 @@ A_init()
 B_input(packet)
   struct pkt packet;
 {
-	struct pkt reply;
-	strncpy(reply.payload, "empty", 20);						// "empty" is just a stub
-	
-	if (!isPacketValid(&packet))								// packet is corrupted
+	if (isPacketValid(&packet))
 	{
-		reply.seqnum = -1;	// not used
-		reply.acknum = -1;	// equivalent to NACK
-	} 
-	else 													// packet is correct
-	if (packet.seqnum == B_receiver.waitingSeqNum)			// and that we expected
-	{
-		struct msg message;
-		strcpy(message.data, packet.payload);
-		
-		tolayer5(1, message);
-		
-		reply.seqnum = -1;								// seq number isn't used in receiver
-		reply.acknum = packet.seqnum;					// ack number of the packet received
-		
-		B_receiver.waitingSeqNum = (B_receiver.waitingSeqNum + 1) % 2;
+		if (packet.seqnum != B_receiver.expectedSeqNum)
+		{
+			B_receiver.packet.acknum = B_receiver.expectedSeqNum - 1;	// the last correctly received
+		}
+		else
+		{
+			struct msg message;
+			strcpy(message.data, packet.payload);
+			tolayer5(1, message);
+			
+			B_receiver.packet.acknum = B_receiver.expectedSeqNum;
+			B_receiver.expectedSeqNum++;
+		}
 	}
-	else													// not what the receiver expects
+	else	// packet is corrupted
 	{
-		reply.seqnum = -1;
-		reply.acknum = (B_receiver.waitingSeqNum + 1) % 2;	// this ack number would be the last correctly received packet
+		B_receiver.packet.acknum = B_receiver.expectedSeqNum - 1;
 	}
 	
-	reply.checksum = calculateChecksum(&reply);
-	tolayer3(1, reply);
+	B_receiver.packet.checksum = calculateChecksum(&B_receiver.packet);
+	tolayer3(1, B_receiver.packet);
 }
 
 /* called when B's timer goes off */
@@ -238,8 +233,11 @@ B_timerinterrupt()
 /* entity B routines are called. You can use it to do any initialization */
 B_init()
 {
-	B_receiver.curAckNum = 0;
-	B_receiver.waitingSeqNum = 0;
+	B_receiver.expectedSeqNum = 0;
+	
+	// create a packet that is going to be sent in reply each time (just with different ACK)
+	B_receiver.packet.seqnum = -1;		// seqnum isn't used in receiver
+	strncpy(B_receiver.packet.payload, "empty", 20);
 }
 
 
