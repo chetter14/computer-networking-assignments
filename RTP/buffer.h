@@ -31,12 +31,12 @@ void initBuffer()
 
 bool isBufferFull()
 {
-	return size == 50;
+	return buffer.size == 50;
 }
 
 bool isBufferEmpty()
 {
-	return size == 0;
+	return buffer.size == 0;
 }
 
 void addPktToBuffer(struct pkt packet)

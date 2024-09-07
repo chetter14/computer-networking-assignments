@@ -75,7 +75,7 @@ typedef struct sender				// define the sender-side required variables
 {
 	int base;
 	int nextSeqNum;
-	struct pkt packets[1'000'000];	// store for retransmission; 1 million of available cells would be enough for such a home task
+	struct pkt packets[1000000];	// store for retransmission; 1 million of available cells would be enough for such a home task
 } sender;
 
 typedef struct receiver				// define the receiver-side required variables
@@ -87,7 +87,7 @@ typedef struct receiver				// define the receiver-side required variables
 sender A_sender;					// create A sender object
 receiver B_receiver;				// create B receiver object
 
-static const int timeout = 20;			// time value after which the timeout interrupt occurs
+static const float timeout = 20;			// time value after which the timeout interrupt occurs
 static const int N = 8;				// window size of the sender
 
 /* called from layer 5, passed the data to be sent to other side */
@@ -97,12 +97,12 @@ A_output(message)
 	struct pkt packet;
 	packet.acknum = -1;						// ack number isn't used in the sender
 	strcpy(packet.payload, message.data);
-	
+		
 	if (A_sender.nextSeqNum < A_sender.base + N)	// there is room for a packet in window
 	{
 		packet.seqnum = A_sender.nextSeqNum;
 		packet.checksum = calculateChecksum(&packet);
-		A_sender.packets[nextSeqNum] = packet;		// store the packet for possible retransmission
+		A_sender.packets[A_sender.nextSeqNum] = packet;		// store the packet for possible retransmission
 		tolayer3(0, packet);
 		
 		if (A_sender.nextSeqNum == A_sender.base)
@@ -111,7 +111,7 @@ A_output(message)
 	}
 	else if (!isBufferFull())						// there is room for a packet in buffer
 	{
-		addToBuffer(packet);
+		addPktToBuffer(packet);
 	}
 	else 											// no room anywhere
 		exit(0);									// ! INTENTIONAL EXIT(), REQUIRED BY THE TASK !
@@ -130,7 +130,7 @@ void sendPacketsFromBuffer()
 		struct pkt tempPacket = getPktFromBuffer();
 		tempPacket.seqnum = A_sender.nextSeqNum;
 		tempPacket.checksum = calculateChecksum(&tempPacket);
-		A_sender.packets[nextSeqNum] = tempPacket;			// for possible retransmission
+		A_sender.packets[A_sender.nextSeqNum] = tempPacket;			// for possible retransmission
 		tolayer3(0, tempPacket);
 		
 		A_sender.nextSeqNum++;
@@ -173,6 +173,7 @@ A_timerinterrupt()
 	for (int i = A_sender.base; i <= A_sender.nextSeqNum - 1; ++i)
 		tolayer3(0, A_sender.packets[i]);
 	
+	stoptimer(0);
 	starttimer(0, timeout);
 }
 
