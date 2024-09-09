@@ -33,6 +33,24 @@ def checksum(string):
     return answer
 
 
+def isErrorInEcho(type, code):
+    if type == 3:                       # means ICMP error
+        if code == 0:
+            print("Destination network unreachable")
+        elif code == 1:
+            print("Destination host unreachable")
+        elif code == 2:
+            print("Destination protocol unreachable")
+        elif code == 3:
+            print("Destination port unreachable")
+        elif code == 6:
+            print("Destination network unknown")
+        elif code == 7:
+            print("Destination host unknown")
+        return True
+    return False
+
+
 def receiveOnePing(mySocket, ID, timeout, destAddr):
     timeLeft = timeout
     while 1:
@@ -51,8 +69,11 @@ def receiveOnePing(mySocket, ID, timeout, destAddr):
         echo_reply = struct.unpack("qqibbHHhff", recPacket)
         # print(echo_reply)
 
-        # in binary format we read from recPacket into 2 floats but we need 1 double
         icmp_header_index = 3
+        if isErrorInEcho(echo_reply[icmp_header_index], echo_reply[icmp_header_index + 1]):
+            return "Error occurred."
+
+        # in binary format we read from recPacket into 2 floats but we need 1 double
         double_struct = struct.pack("ff", echo_reply[icmp_header_index + 5], echo_reply[icmp_header_index + 6])
         time_in_packet = struct.unpack("d", double_struct)[0]
        
@@ -145,4 +166,4 @@ def ping(host, timeout=1):
     return delay
 
 
-ping("vk.com")
+ping("abc.com")
