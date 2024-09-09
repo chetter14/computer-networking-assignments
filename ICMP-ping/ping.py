@@ -111,13 +111,38 @@ def ping(host, timeout=1):
     print("Pinging " + dest + " using Python:")
     print("")
     
+    pings_number = 10
+
+    min_rtt = 10
+    max_rtt = 0
+    total_rtt_sum = 0
+    rtt_number = 0
+    packets_lost = 0
+
     # Send ping requests to a server separated by approximately one second
-    while 1 :
+    for i in range(pings_number) :
         delay = doOnePing(dest, timeout)
         print("RTT - " + str(delay) + "s")
+
+        if isinstance(delay, str):
+            packets_lost = packets_lost + 1
+        else:
+            if delay < min_rtt:
+                min_rtt = delay
+            elif delay > max_rtt:
+                max_rtt = delay
+            total_rtt_sum = total_rtt_sum + delay
+            rtt_number = rtt_number + 1
+
         time.sleep(1)# one second
     
+    print("")
+    print("Max RTT - " + str(max_rtt) + "s")
+    print("Min RTT - " + str(min_rtt) + "s")
+    print("Average RTT - " + str(total_rtt_sum / rtt_number) + "s")
+    print("Packets lost - " + str(packets_lost / pings_number * 100) + "%")
+
     return delay
 
 
-ping("google.com")
+ping("vk.com")
