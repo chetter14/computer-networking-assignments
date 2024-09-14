@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdbool.h>
 
 extern struct rtpkt {
   int sourceid;       /* id of sending router sending this pkt */
@@ -19,16 +20,77 @@ struct distance_table
 
 /* students to write the following two routines, and maybe some others */
 
+void notifyNeighboringNodes()
+{
+	// Send the distance vector to other nodes:
+	
+	struct rtpkt updatePacket;
+	updatePacket.sourceid = 0;
+	for (int i = 0; i < 4; ++i)
+	{
+		updatePacket.mincost[i] = dt0.costs[i][0];
+	}
+	
+	for (int i = 1; i < 4; ++i)
+	{
+		updatePacket.destid = i;
+		tolayer2(updatePacket);
+	}
+}
+
 void rtinit0() 
 {
-
+	// Initialize a distance vector:
+	
+	// destination 0:
+	dt0.costs[0][0] = 0;
+	dt0.costs[0][1] = 999;		// source 0 and dest 0 through 1/2/3 makes no sense, so assign "infinity"
+	dt0.costs[0][2] = 999;
+	dt0.costs[0][3] = 999;
+	
+	// destination 1:
+	dt0.costs[1][0] = 1;
+	dt0.costs[1][1] = 1;		// [source 0, dest 1] = { 1 } + [source 1, dest 1] = { 0 } 	-> 1 + 0 = 1
+	dt0.costs[1][2] = 999;		// unknown
+	dt0.costs[1][3] = 999;		// unknown
+	
+	// destination 2:
+	dt0.costs[2][0] = 3;
+	dt0.costs[2][1] = 999;		// unknown
+	dt0.costs[2][2] = 3;		// [2, 0] + 0 = 3 + 0 = 3
+	dt0.costs[2][3] = 999;		// unknown
+	
+	// destination 3:
+	dt0.costs[3][0] = 7;
+	dt0.costs[3][1] = 999;		// unknown
+	dt0.costs[3][2] = 999;		// unknown
+	dt0.costs[3][3] = 7;		// [3, 0] + 0 = 7 + 0 = 7
+	
+	printdt0(&dt0);
+	
+	notifyNeighboringNodes();
 }
 
 
 void rtupdate0(rcvdpkt)
   struct rtpkt *rcvdpkt;
 {
-
+	int srcNode = rcvdpkt->sourceid;
+	
+	// iterate over min costs of another node:
+	
+	bool wasUpdated = false;
+	for (int i = 1; i < 4; ++i)
+	{
+		if (dt0.costs[i][0] > rcvdpkt->mincost[i] + dt0.costs[srcNode][0])
+		{
+			dt0.costs[i][0] = rcvdpkt->mincost[i] + dt0.costs[srcNode][0];
+			wasUpdated = true;
+		}
+	}
+	
+	if (wasUpdated)
+		notifyNeighboringNodes();
 }
 
 
