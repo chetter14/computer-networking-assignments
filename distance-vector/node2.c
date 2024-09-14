@@ -19,8 +19,58 @@ struct distance_table
 
 /* students to write the following two routines, and maybe some others */
 
+void notifyNeighboringNodes()
+{
+	// Send the distance vector to 0, 1, and 3 nodes:
+	
+	struct rtpkt updatePacket;
+	updatePacket.sourceid = 2;
+	for (int i = 0; i < 4; ++i)
+	{
+		updatePacket.mincost[i] = dt2.costs[i][2];
+	}
+	
+	for (int i = 0; i < 4; ++i)
+	{
+		if (i == 2)
+			continue;
+		
+		updatePacket.destid = i;
+		tolayer2(updatePacket);
+	}
+}
+
 void rtinit2() 
 {
+	// Initialize a distance vector:
+	
+	// destination 0:
+	dt2.costs[0][0] = 999;
+	dt2.costs[0][1] = 999;
+	dt2.costs[0][2] = 3;
+	dt2.costs[0][3] = 999;
+	
+	// destination 1:
+	dt2.costs[1][0] = 999;
+	dt2.costs[1][1] = 999;
+	dt2.costs[1][2] = 1;
+	dt2.costs[1][3] = 999;
+	
+	// destination 2:
+	dt2.costs[2][0] = 999;
+	dt2.costs[2][1] = 999;
+	dt2.costs[2][2] = 0;
+	dt2.costs[2][3] = 999;
+	
+	// destination 3:
+	dt2.costs[3][0] = 999;
+	dt2.costs[3][1] = 999;
+	dt2.costs[3][2] = 2;
+	dt2.costs[3][3] = 999;
+	
+	printdt2(&dt2);
+	
+	notifyNeighboringNodes();
 }
 
 
@@ -28,7 +78,22 @@ void rtupdate2(rcvdpkt)
   struct rtpkt *rcvdpkt;
   
 {
-
+	int srcNode = rcvdpkt->sourceid;
+	
+	// iterate over min costs of another node:
+	
+	bool wasUpdated = false;
+	for (int i = 0; i < 4; ++i)
+	{
+		if (dt2.costs[i][2] > rcvdpkt->mincost[i] + dt2.costs[srcNode][2])
+		{
+			dt2.costs[i][2] = rcvdpkt->mincost[i] + dt2.costs[srcNode][2];
+			wasUpdated = true;
+		}
+	}
+	
+	if (wasUpdated)
+		notifyNeighboringNodes();
 }
 
 

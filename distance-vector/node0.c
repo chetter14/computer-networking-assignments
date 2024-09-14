@@ -22,7 +22,7 @@ struct distance_table
 
 void notifyNeighboringNodes()
 {
-	// Send the distance vector to other nodes:
+	// Send the distance vector to 1, 2, and 3 nodes:
 	
 	struct rtpkt updatePacket;
 	updatePacket.sourceid = 0;
@@ -50,27 +50,29 @@ void rtinit0()
 	
 	// destination 1:
 	dt0.costs[1][0] = 1;
-	dt0.costs[1][1] = 1;		// [source 0, dest 1] = { 1 } + [source 1, dest 1] = { 0 } 	-> 1 + 0 = 1
+	dt0.costs[1][1] = 999;
 	dt0.costs[1][2] = 999;		// unknown
 	dt0.costs[1][3] = 999;		// unknown
 	
 	// destination 2:
 	dt0.costs[2][0] = 3;
 	dt0.costs[2][1] = 999;		// unknown
-	dt0.costs[2][2] = 3;		// [2, 0] + 0 = 3 + 0 = 3
+	dt0.costs[2][2] = 999;
 	dt0.costs[2][3] = 999;		// unknown
 	
 	// destination 3:
 	dt0.costs[3][0] = 7;
 	dt0.costs[3][1] = 999;		// unknown
 	dt0.costs[3][2] = 999;		// unknown
-	dt0.costs[3][3] = 7;		// [3, 0] + 0 = 7 + 0 = 7
+	dt0.costs[3][3] = 999;
 	
 	printdt0(&dt0);
 	
 	notifyNeighboringNodes();
 }
 
+// it seems that the rtupdate() function better to make parameterized 
+// and use 1 function for all the nodes (because the code is almost identical)
 
 void rtupdate0(rcvdpkt)
   struct rtpkt *rcvdpkt;
@@ -80,7 +82,7 @@ void rtupdate0(rcvdpkt)
 	// iterate over min costs of another node:
 	
 	bool wasUpdated = false;
-	for (int i = 1; i < 4; ++i)
+	for (int i = 0; i < 4; ++i)
 	{
 		if (dt0.costs[i][0] > rcvdpkt->mincost[i] + dt0.costs[srcNode][0])
 		{
