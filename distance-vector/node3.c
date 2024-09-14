@@ -67,6 +67,8 @@ void rtinit3()
 	dt3.costs[3][2] = 999;
 	dt3.costs[3][3] = 0;
 	
+	printf("Node 3 initialization at %f\n\n", clocktime);
+	
 	printdt3(&dt3);
 	
 	notifyNeighboringNodes();
@@ -90,6 +92,8 @@ void rtupdate3(rcvdpkt)
 			wasUpdated = true;
 		}
 	}
+	
+	printf("Node 3 update at %f\n\n", clocktime);
 	
 	if (wasUpdated)
 		notifyNeighboringNodes();

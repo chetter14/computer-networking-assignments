@@ -12,6 +12,8 @@ extern int TRACE;
 extern int YES;
 extern int NO;
 
+extern float clocktime;
+
 struct distance_table 
 {
   int costs[4][4];
@@ -66,6 +68,8 @@ void rtinit0()
 	dt0.costs[3][2] = 999;		// unknown
 	dt0.costs[3][3] = 999;
 	
+	printf("Node 0 initialization at %f\n\n", clocktime);
+	
 	printdt0(&dt0);
 	
 	notifyNeighboringNodes();
@@ -90,6 +94,8 @@ void rtupdate0(rcvdpkt)
 			wasUpdated = true;
 		}
 	}
+	
+	printf("Node 0 update at %f\n\n", clocktime);
 	
 	if (wasUpdated)
 		notifyNeighboringNodes();
