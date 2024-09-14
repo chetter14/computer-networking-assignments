@@ -1,3 +1,4 @@
 RTP/*.exe
+distance-vector/*.exe
 
 !.gitignore

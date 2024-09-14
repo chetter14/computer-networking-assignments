@@ -22,7 +22,7 @@ struct distance_table
 
 /* students to write the following two routines, and maybe some others */
 
-void notifyNeighboringNodes()
+static void notifyNeighboringNodes()
 {
 	// Send the distance vector to 1, 2, and 3 nodes:
 	
@@ -52,23 +52,23 @@ void rtinit0()
 	
 	// destination 1:
 	dt0.costs[1][0] = 1;
-	dt0.costs[1][1] = 999;
+	dt0.costs[1][1] = 1;
 	dt0.costs[1][2] = 999;		// unknown
 	dt0.costs[1][3] = 999;		// unknown
 	
 	// destination 2:
 	dt0.costs[2][0] = 3;
 	dt0.costs[2][1] = 999;		// unknown
-	dt0.costs[2][2] = 999;
+	dt0.costs[2][2] = 3;
 	dt0.costs[2][3] = 999;		// unknown
 	
 	// destination 3:
 	dt0.costs[3][0] = 7;
 	dt0.costs[3][1] = 999;		// unknown
 	dt0.costs[3][2] = 999;		// unknown
-	dt0.costs[3][3] = 999;
+	dt0.costs[3][3] = 7;
 	
-	printf("Node 0 initialization at %f\n\n", clocktime);
+	// printf("Node 0 initialization at %f\n\n", clocktime);
 	
 	printdt0(&dt0);
 	
@@ -85,6 +85,10 @@ void rtupdate0(rcvdpkt)
 	
 	// iterate over min costs of another node:
 	
+	printf("\nBefore update:\n");
+	printdt0(&dt0);
+
+	
 	bool wasUpdated = false;
 	for (int i = 0; i < 4; ++i)
 	{
@@ -95,10 +99,15 @@ void rtupdate0(rcvdpkt)
 		}
 	}
 	
-	printf("Node 0 update at %f\n\n", clocktime);
-	
+	// printf("Node 0 update at %f\n\n", clocktime);
+		
 	if (wasUpdated)
+	{
+		printf("\nAfter update:\n");
+		printdt0(&dt0);
+		printf("\nCosts to other nodes: 1 - %d, 2 - %d, 3 - %d\n", dt0.costs[1][0], dt0.costs[2][0], dt0.costs[3][0]);
 		notifyNeighboringNodes();
+	}
 }
 
 

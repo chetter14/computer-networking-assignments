@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdbool.h>
 
 extern struct rtpkt {
   int sourceid;       /* id of sending router sending this pkt */
@@ -11,6 +12,8 @@ extern int TRACE;
 extern int YES;
 extern int NO;
 
+extern float clocktime;
+
 struct distance_table 
 {
   int costs[4][4];
@@ -19,7 +22,7 @@ struct distance_table
 
 /* students to write the following two routines, and maybe some others */
 
-void notifyNeighboringNodes()
+static void notifyNeighboringNodes()
 {
 	// Send the distance vector to 0, 1, and 3 nodes:
 	
@@ -45,14 +48,14 @@ void rtinit2()
 	// Initialize a distance vector:
 	
 	// destination 0:
-	dt2.costs[0][0] = 999;
+	dt2.costs[0][0] = 3;
 	dt2.costs[0][1] = 999;
 	dt2.costs[0][2] = 3;
 	dt2.costs[0][3] = 999;
 	
 	// destination 1:
 	dt2.costs[1][0] = 999;
-	dt2.costs[1][1] = 999;
+	dt2.costs[1][1] = 1;
 	dt2.costs[1][2] = 1;
 	dt2.costs[1][3] = 999;
 	
@@ -66,9 +69,9 @@ void rtinit2()
 	dt2.costs[3][0] = 999;
 	dt2.costs[3][1] = 999;
 	dt2.costs[3][2] = 2;
-	dt2.costs[3][3] = 999;
+	dt2.costs[3][3] = 2;
 	
-	printf("Node 2 initialization at %f\n\n", clocktime);
+	// printf("Node 2 initialization at %f\n\n", clocktime);
 	
 	printdt2(&dt2);
 	
@@ -84,6 +87,9 @@ void rtupdate2(rcvdpkt)
 	
 	// iterate over min costs of another node:
 	
+	printf("\nBefore update:\n");
+	printdt2(&dt2);
+	
 	bool wasUpdated = false;
 	for (int i = 0; i < 4; ++i)
 	{
@@ -94,10 +100,15 @@ void rtupdate2(rcvdpkt)
 		}
 	}
 	
-	printf("Node 2 update at %f\n\n", clocktime);
+	// printf("Node 2 update at %f\n\n", clocktime);
 	
 	if (wasUpdated)
+	{
+		printf("\nAfter update:\n");
+		printdt2(&dt2);
+		printf("\nCosts to other nodes: 0 - %d, 1 - %d, 3 - %d\n", dt2.costs[0][2], dt2.costs[1][2], dt2.costs[3][2]);
 		notifyNeighboringNodes();
+	}
 }
 
 
